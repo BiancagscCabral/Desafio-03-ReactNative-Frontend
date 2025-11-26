@@ -81,7 +81,7 @@ export function Home() {
           keyExtractor={(item) => item.id}
           renderItem={renderItem}
           
-          // --- MÁGICA DO GRID ---
+         
           numColumns={COLUMN_COUNT}
           columnWrapperStyle={styles.row}
           contentContainerStyle={styles.listContent}

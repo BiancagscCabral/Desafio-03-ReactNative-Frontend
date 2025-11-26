@@ -195,7 +195,7 @@ const styles = StyleSheet.create({
     height: 56,
   },
   deleteButton: {
-    backgroundColor: '#FEE2E2', // Vermelho bem claro
+    backgroundColor: '#FEE2E2', 
     borderWidth: 1,
     borderColor: '#FECACA',
   },
