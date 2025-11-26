@@ -5,6 +5,7 @@ node_modules/
 
 # Expo
 .expo/
+src/services/api.ts
 dist/
 web-build/
 expo-env.d.ts

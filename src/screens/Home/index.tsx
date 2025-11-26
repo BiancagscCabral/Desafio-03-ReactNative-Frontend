@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, FlatList, Image, TouchableOpacity } from 'react-native';
-import { useNavigation, useIsFocused } from '@react-navigation/native'; // <--- useIsFocused é importante!
+import { View, Text, StyleSheet, FlatList, Image, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
+import { useNavigation, useIsFocused } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
-import { MOCK_PRODUCTS } from '../../services/mockData';
+import api from '../../services/api'; // <--- Importamos a API
 import { Product } from '../../types';
 import { RootStackParamList } from '../../routes';
 
@@ -11,15 +11,29 @@ type NavigationProps = NativeStackNavigationProp<RootStackParamList>;
 
 export function Home() {
   const navigation = useNavigation<NavigationProps>();
-  const isFocused = useIsFocused(); // <--- Hook para saber se a tela está focada
+  const isFocused = useIsFocused();
   
-  // Estado local para forçar a lista a atualizar quando voltamos da tela de cadastro
-  const [listData, setListData] = useState<Product[]>(MOCK_PRODUCTS);
+  const [listData, setListData] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true); // Estado de carregamento
 
-  // Sempre que a tela ganhar foco (você voltar pra ela), atualiza a lista
+  // Função para buscar dados do Back-end
+  async function loadProducts() {
+    try {
+      setLoading(true);
+      const response = await api.get('/products'); // Chama a rota /products
+      setListData(response.data);
+    } catch (error) {
+      console.log(error);
+      Alert.alert('Erro', 'Não foi possível carregar os produtos do servidor.');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  // Busca sempre que a tela ganha foco
   useEffect(() => {
     if (isFocused) {
-      setListData([...MOCK_PRODUCTS]); // Cria uma cópia para o React perceber a mudança
+      loadProducts();
     }
   }, [isFocused]);
 
@@ -49,15 +63,21 @@ export function Home() {
 
   return (
     <View style={styles.container}>
-      <FlatList
-        data={listData} // Usamos o estado local agora
-        keyExtractor={(item) => item.id}
-        renderItem={renderItem}
-        contentContainerStyle={styles.listContent}
-        showsVerticalScrollIndicator={false}
-      />
+      {loading ? (
+        <ActivityIndicator size="large" color="#00B37E" style={{ marginTop: 50 }} />
+      ) : (
+        <FlatList
+          data={listData}
+          keyExtractor={(item) => item.id}
+          renderItem={renderItem}
+          contentContainerStyle={styles.listContent}
+          showsVerticalScrollIndicator={false}
+          // Pull to Refresh (arrastar pra baixo pra atualizar)
+          onRefresh={loadProducts}
+          refreshing={loading}
+        />
+      )}
 
-      {/* Botão Flutuante (+) */}
       <TouchableOpacity style={styles.fab} onPress={handleAddProduct}>
         <Text style={styles.fabText}>+</Text>
       </TouchableOpacity>
@@ -72,7 +92,7 @@ const styles = StyleSheet.create({
   },
   listContent: {
     padding: 20,
-    paddingBottom: 100, // Espaço extra para o botão não cobrir o último item
+    paddingBottom: 100,
   },
   card: {
     backgroundColor: '#FFF',
@@ -103,7 +123,6 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginTop: 4,
   },
-  // Estilos do Botão Flutuante
   fab: {
     position: 'absolute',
     bottom: 24,
@@ -124,6 +143,6 @@ const styles = StyleSheet.create({
     fontSize: 32,
     color: '#FFF',
     fontWeight: 'bold',
-    marginTop: -2, // Ajuste visual pequeno
+    marginTop: -2,
   }
 });

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Alert } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Alert, ActivityIndicator } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { MOCK_PRODUCTS } from '../../services/mockData';
+import api from '../../services/api'; // Importamos a API
 
 export function AddProduct() {
   const navigation = useNavigation();
@@ -10,27 +10,34 @@ export function AddProduct() {
   const [price, setPrice] = useState('');
   const [image, setImage] = useState('');
   const [description, setDescription] = useState('');
+  const [loading, setLoading] = useState(false);  
 
-  function handleSave() {
+  async function handleSave() {
     if (!name || !price || !image) {
       Alert.alert('Erro', 'Preencha pelo menos nome, preço e imagem!');
       return;
     }
 
-    // Cria um novo objeto de produto
-    const newProduct = {
-      id: String(new Date().getTime()), // Gera um ID único baseado no tempo
-      name,
-      price: parseFloat(price.replace(',', '.')), // Garante que vira número
-      image,
-      description
-    };
+    try {
+      setLoading(true);
 
-    // ADICIONA NA LISTA MOCKADA (Gambiarra temporária até ter Back-end)
-    MOCK_PRODUCTS.push(newProduct);
+      // Envia os dados para o Back-end
+      await api.post('/products', {
+        name,
+        price: parseFloat(price.replace(',', '.')), // Converte "10,50" para 10.50
+        image,
+        description
+      });
 
-    Alert.alert('Sucesso', 'Produto cadastrado!');
-    navigation.goBack(); // Volta para a Home
+      Alert.alert('Sucesso', 'Produto cadastrado!');
+      navigation.goBack(); // Volta para a Home (que vai atualizar sozinha)
+
+    } catch (error) {
+      console.log(error);
+      Alert.alert('Erro', 'Não foi possível salvar o produto.');
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -74,8 +81,16 @@ export function AddProduct() {
           onChangeText={setDescription}
         />
 
-        <TouchableOpacity style={styles.button} onPress={handleSave}>
-          <Text style={styles.buttonText}>CADASTRAR</Text>
+        <TouchableOpacity 
+          style={[styles.button, loading && { opacity: 0.5 }]} 
+          onPress={handleSave}
+          disabled={loading}
+        >
+          {loading ? (
+            <ActivityIndicator color="#FFF" />
+          ) : (
+            <Text style={styles.buttonText}>CADASTRAR</Text>
+          )}
         </TouchableOpacity>
       </ScrollView>
     </View>
@@ -121,6 +136,8 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     alignItems: 'center',
     marginTop: 8,
+    height: 56,
+    justifyContent: 'center',
   },
   buttonText: {
     color: '#fff',
