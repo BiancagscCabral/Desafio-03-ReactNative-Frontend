@@ -5,14 +5,15 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { Home } from '../screens/Home';
 import { Details } from '../screens/Details';
 import { Login } from '../screens/Login';
-import { AddProduct } from '../screens/AddProduct'; // <--- Importe aqui
+import { AddProduct } from '../screens/AddProduct';
 import { Product } from '../types';
 
 export type RootStackParamList = {
   Login: undefined;
   Home: undefined;
   Details: { product: Product };
-  AddProduct: undefined; // <--- Adicione aqui
+  // MUDANÇA AQUI: Agora aceita um "productToEdit" opcional (?)
+  AddProduct: { productToEdit?: Product } | undefined; 
 }
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -25,11 +26,11 @@ export function Routes() {
         <Stack.Screen name="Home" component={Home} options={{ title: 'Loja Virtual' }} />
         <Stack.Screen name="Details" component={Details} options={{ title: 'Detalhes' }} />
         
-        {/* Adicione a tela na pilha */}
         <Stack.Screen 
           name="AddProduct" 
           component={AddProduct} 
-          options={{ title: 'Adicionar Produto' }} 
+          // O título pode mudar dinamicamente na tela, mas aqui deixamos o padrão
+          options={{ title: 'Gerenciar Produto' }} 
         />
       </Stack.Navigator>
     </NavigationContainer>
