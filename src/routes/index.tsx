@@ -23,14 +23,13 @@ export function Routes() {
     <NavigationContainer>
       <Stack.Navigator initialRouteName="Login">
         <Stack.Screen name="Login" component={Login} options={{ headerShown: false }} />
-        <Stack.Screen name="Home" component={Home} options={{ title: 'Loja Virtual' }} />
+        <Stack.Screen name="Home" component={Home} options={{ title: 'NexoApp' }} />
         <Stack.Screen name="Details" component={Details} options={{ title: 'Detalhes' }} />
         
         <Stack.Screen 
           name="AddProduct" 
           component={AddProduct} 
-          // O título pode mudar dinamicamente na tela, mas aqui deixamos o padrão
-          options={{ title: 'Gerenciar Produto' }} 
+          options={{ title: 'Cadastrar Produto' }} 
         />
       </Stack.Navigator>
     </NavigationContainer>

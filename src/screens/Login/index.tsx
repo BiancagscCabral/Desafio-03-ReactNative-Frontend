@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, KeyboardAvoidingView, Platform } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../routes';
@@ -12,101 +12,139 @@ export function Login() {
   const [password, setPassword] = useState('');
 
   function handleLogin() {
-    // Validação simples apenas para testar
     if (email.trim() === '' || password.trim() === '') {
       Alert.alert('Atenção', 'Preencha todos os campos!');
       return;
     }
-
-    // Aqui futuramente chamaremos o Back-end real
-    // Por enquanto, vamos fingir que deu certo e ir para a Home
     navigation.replace('Home'); 
   }
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Market App</Text>
-      <Text style={styles.subtitle}>Faça login para começar</Text>
-
-      <View style={styles.inputContainer}>
-        <Text style={styles.label}>E-mail</Text>
-        <TextInput 
-          style={styles.input}
-          placeholder="seu@email.com"
-          keyboardType="email-address"
-          autoCapitalize="none"
-          value={email}
-          onChangeText={setEmail}
-        />
+    <KeyboardAvoidingView 
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      style={styles.container}
+    >
+      <View style={styles.header}>
+        <Text style={styles.title}>Nexo<Text style={styles.titleHighlight}>App</Text></Text>
+        <Text style={styles.subtitle}>Gerencie sua loja de qualquer lugar</Text>
       </View>
 
-      <View style={styles.inputContainer}>
-        <Text style={styles.label}>Senha</Text>
-        <TextInput 
-          style={styles.input}
-          placeholder="******"
-          secureTextEntry
-          value={password}
-          onChangeText={setPassword}
-        />
-      </View>
+      <View style={styles.card}>
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>E-MAIL</Text>
+          <TextInput 
+            style={styles.input}
+            placeholder="seu@email.com"
+            placeholderTextColor="#9CA3AF"
+            keyboardType="email-address"
+            autoCapitalize="none"
+            value={email}
+            onChangeText={setEmail}
+          />
+        </View>
 
-      <TouchableOpacity style={styles.button} onPress={handleLogin}>
-        <Text style={styles.buttonText}>ENTRAR</Text>
-      </TouchableOpacity>
-    </View>
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>SENHA</Text>
+          <TextInput 
+            style={styles.input}
+            placeholder="••••••"
+            placeholderTextColor="#9CA3AF"
+            secureTextEntry
+            value={password}
+            onChangeText={setPassword}
+          />
+        </View>
+
+        <TouchableOpacity style={styles.button} onPress={handleLogin} activeOpacity={0.8}>
+          <Text style={styles.buttonText}>ACESSAR</Text>
+        </TouchableOpacity>
+      </View>
+      
+      <Text style={styles.footerText}>
+        Esqueceu a senha? <Text style={styles.link}>Recuperar</Text>
+      </Text>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#F0F2F5', // Mesmo cinza da Home
     justifyContent: 'center',
     padding: 24,
   },
+  header: {
+    alignItems: 'center',
+    marginBottom: 32,
+  },
   title: {
-    fontSize: 32,
+    fontSize: 42,
     fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 8,
-    textAlign: 'center',
+    color: '#1F2937',
+  },
+  titleHighlight: {
+    color: '#00B37E',
   },
   subtitle: {
     fontSize: 16,
-    color: '#666',
-    textAlign: 'center',
-    marginBottom: 48,
+    color: '#6B7280',
+    marginTop: 8,
   },
-  inputContainer: {
-    marginBottom: 16,
+  card: {
+    backgroundColor: '#FFF',
+    borderRadius: 20,
+    padding: 24,
+    // Sombra elegante
+    elevation: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.1,
+    shadowRadius: 20,
+  },
+  inputGroup: {
+    marginBottom: 20,
   },
   label: {
-    fontSize: 14,
-    color: '#333',
-    fontWeight: '600',
-    marginBottom: 6,
+    fontSize: 12,
+    color: '#9CA3AF',
+    fontWeight: '700',
+    marginBottom: 8,
+    letterSpacing: 0.8,
   },
   input: {
-    height: 50,
+    height: 52,
     borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
+    borderColor: '#E5E7EB',
+    borderRadius: 12,
     paddingHorizontal: 16,
     fontSize: 16,
-    backgroundColor: '#F9F9F9',
+    color: '#111827',
+    backgroundColor: '#F9FAFB', // Fundo cinza bem leve no input
   },
   button: {
     height: 56,
     backgroundColor: '#00B37E',
-    borderRadius: 8,
+    borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 24,
+    marginTop: 12,
+    elevation: 3,
   },
   buttonText: {
     color: '#FFF',
     fontWeight: 'bold',
     fontSize: 16,
+    letterSpacing: 1,
+  },
+  footerText: {
+    textAlign: 'center',
+    marginTop: 32,
+    color: '#6B7280',
+    fontSize: 14,
+  },
+  link: {
+    color: '#00B37E',
+    fontWeight: 'bold',
   }
 });

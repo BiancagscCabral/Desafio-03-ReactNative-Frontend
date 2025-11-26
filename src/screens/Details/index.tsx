@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, Image, StyleSheet, TouchableOpacity, ScrollView, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, Image, StyleSheet, TouchableOpacity, ScrollView, Alert, ActivityIndicator, Platform } from 'react-native';
 import { useRoute, useNavigation, useIsFocused } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
@@ -12,93 +12,88 @@ type DetailsScreenProp = NativeStackNavigationProp<RootStackParamList, 'Details'
 export function Details() {
   const route = useRoute();
   const navigation = useNavigation<DetailsScreenProp>();
-  const isFocused = useIsFocused(); // <--- IMPORTANTE: Saber se a tela está ativa
+  const isFocused = useIsFocused();
 
-  // Recupera o produto inicial que veio da navegação
   const { product: initialProduct } = route.params as { product: Product };
-
-  // Estado local para guardar os dados atualizados do produto
   const [data, setData] = useState<Product>(initialProduct);
   const [loading, setLoading] = useState(false);
 
-  // --- 1. FUNÇÃO PARA RECARREGAR DADOS (Corrige o bug da edição) ---
   async function loadProduct() {
     try {
-      // Chama o backend para pegar os dados mais recentes deste produto
       const response = await api.get(`/products/${initialProduct.id}`);
       setData(response.data);
-      console.log("Detalhes atualizados com sucesso!");
     } catch (error) {
-      console.log("Erro ao atualizar detalhes (talvez a rota GET /:id não exista no back?)");
+      console.log("Erro ao atualizar detalhes");
     }
   }
 
-  // Sempre que a tela ganhar foco, recarrega os dados
   useEffect(() => {
     if (isFocused) {
       loadProduct();
     }
   }, [isFocused]);
 
-  // --- 2. FUNÇÃO PARA EXCLUIR COM LOGS (Para descobrir o erro) ---
   function handleDelete() {
-    console.log("--- TENTATIVA DE EXCLUSÃO ---");
-    console.log("ID do Produto:", data.id);
-
-    Alert.alert(
-      "Remover Produto",
-      "Tem certeza que deseja apagar este produto?",
-      [
-        { text: "Cancelar", style: "cancel" },
-        { 
-          text: "Sim, apagar", 
-          style: "destructive",
-          onPress: async () => {
-            try {
-              setLoading(true);
-              console.log(`Enviando DELETE para: /products/${data.id}`);
-              
-              await api.delete(`/products/${data.id}`); 
-              
-              console.log("SUCESSO: Produto apagado!");
-              Alert.alert("Sucesso", "Produto removido!");
-              navigation.goBack(); 
-            } catch (error: any) {
-              console.log("ERRO AO APAGAR:", error);
-              if (error.response) {
-                console.log("Status:", error.response.status);
-                console.log("Dados:", error.response.data);
-              }
-              Alert.alert("Erro", "Não foi possível apagar. Veja o terminal.");
-            } finally {
-              setLoading(false);
-            }
-          }
+    const confirmDelete = async () => {
+      try {
+        setLoading(true);
+        await api.delete(`/products/${data.id}`); 
+        if (Platform.OS === 'web') {
+          alert("Sucesso: Produto removido!");
+        } else {
+          Alert.alert("Sucesso", "Produto removido!");
         }
-      ]
-    );
+        navigation.goBack(); 
+      } catch (error) {
+        alert("Erro ao apagar.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (Platform.OS === 'web') {
+      if (window.confirm("Tem certeza que deseja apagar este produto?")) {
+        confirmDelete();
+      }
+    } else {
+      Alert.alert(
+        "Remover Produto",
+        "Tem certeza que deseja apagar este produto?",
+        [
+          { text: "Cancelar", style: "cancel" },
+          { text: "Sim, apagar", style: "destructive", onPress: confirmDelete }
+        ]
+      );
+    }
   }
 
-  // Função para EDITAR
   function handleEdit() {
-    // Passamos o 'data' (estado atual), garantindo que enviamos a versão mais nova
     navigation.navigate('AddProduct', { productToEdit: data });
   }
 
   return (
     <View style={styles.container}>
-      <ScrollView>
-        {data.image ? (
-            <Image source={{ uri: data.image }} style={styles.image} resizeMode="cover" />
-        ) : null}
+      <ScrollView showsVerticalScrollIndicator={false}>
+        {/* Header da Imagem */}
+        <View style={styles.imageContainer}>
+          <Image 
+            source={{ uri: data.image || 'https://via.placeholder.com/300' }} 
+            style={styles.image} 
+            resizeMode="cover" 
+          />
+        </View>
         
         <View style={styles.content}>
-          <Text style={styles.name}>{data.name}</Text>
-          <Text style={styles.price}>
-            {Number(data.price).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-          </Text>
+          <View style={styles.headerContent}>
+            <Text style={styles.name}>{data.name}</Text>
+            <Text style={styles.price}>
+              {Number(data.price).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+            </Text>
+          </View>
           
-          <Text style={styles.aboutTitle}>Sobre o produto</Text>
+          <View style={styles.divider} />
+
+          <Text style={styles.aboutTitle}>Descrição</Text>
           <Text style={styles.description}>{data.description}</Text>
         </View>
       </ScrollView>
@@ -114,9 +109,9 @@ export function Details() {
           disabled={loading}
         >
           {loading ? (
-             <ActivityIndicator color="#FFF" />
+             <ActivityIndicator color="#FFF" size="small" />
           ) : (
-             <Text style={styles.buttonText}>Excluir Produto</Text>
+             <Text style={styles.buttonText}>Excluir</Text>
           )}
         </TouchableOpacity>
       </View>
@@ -125,17 +120,96 @@ export function Details() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff' },
-  image: { width: '100%', height: 300 },
-  content: { padding: 24 },
-  name: { fontSize: 26, fontWeight: 'bold', color: '#333' },
-  price: { fontSize: 22, color: '#00B37E', fontWeight: 'bold', marginTop: 8 },
-  aboutTitle: { fontSize: 16, fontWeight: 'bold', color: '#333', marginTop: 24, marginBottom: 8 },
-  description: { fontSize: 16, color: '#666', lineHeight: 24 },
-  footer: { padding: 24, borderTopWidth: 1, borderTopColor: '#eee', flexDirection: 'row', justifyContent: 'space-between', gap: 12 },
-  button: { padding: 16, borderRadius: 8, alignItems: 'center', justifyContent: 'center', flex: 1 },
-  deleteButton: { backgroundColor: '#DC1637' },
-  editButton: { backgroundColor: '#E1E1E6' },
-  buttonText: { color: '#fff', fontWeight: 'bold', fontSize: 14 },
-  editButtonText: { color: '#333', fontWeight: 'bold', fontSize: 14 }
+  container: {
+    flex: 1,
+    backgroundColor: '#F0F2F5', // Fundo geral
+  },
+  imageContainer: {
+    width: '100%',
+    height: 300,
+    backgroundColor: '#FFF',
+    borderBottomLeftRadius: 30,
+    borderBottomRightRadius: 30,
+    overflow: 'hidden',
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+  },
+  image: {
+    width: '100%',
+    height: '100%',
+  },
+  content: {
+    padding: 24,
+  },
+  headerContent: {
+    marginBottom: 16,
+  },
+  name: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: '#1F2937',
+    marginBottom: 8,
+  },
+  price: {
+    fontSize: 24,
+    color: '#00B37E',
+    fontWeight: 'bold',
+  },
+  divider: {
+    height: 1,
+    backgroundColor: '#E5E7EB',
+    marginVertical: 16,
+  },
+  aboutTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#374151',
+    marginBottom: 8,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  description: {
+    fontSize: 16,
+    color: '#6B7280',
+    lineHeight: 26,
+  },
+  footer: {
+    padding: 24,
+    backgroundColor: '#FFF',
+    borderTopWidth: 1,
+    borderTopColor: '#F3F4F6',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 16,
+    paddingBottom: Platform.OS === 'ios' ? 34 : 24,
+  },
+  button: {
+    padding: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flex: 1,
+    height: 56,
+  },
+  deleteButton: {
+    backgroundColor: '#FEE2E2', // Vermelho bem claro
+    borderWidth: 1,
+    borderColor: '#FECACA',
+  },
+  editButton: {
+    backgroundColor: '#00B37E',
+  },
+  buttonText: {
+    color: '#DC2626', // Texto vermelho escuro
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
+  editButtonText: {
+    color: '#FFF',
+    fontWeight: 'bold',
+    fontSize: 16,
+  }
 });

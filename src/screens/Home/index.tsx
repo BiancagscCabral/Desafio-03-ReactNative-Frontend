@@ -1,36 +1,40 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, FlatList, Image, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, StyleSheet, FlatList, Image, TouchableOpacity, ActivityIndicator, Dimensions } from 'react-native';
 import { useNavigation, useIsFocused } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
-import api from '../../services/api'; // <--- Importamos a API
+import api from '../../services/api';
 import { Product } from '../../types';
 import { RootStackParamList } from '../../routes';
 
 type NavigationProps = NativeStackNavigationProp<RootStackParamList>;
+
+// 📐 Cálculo para o Grid responsivo
+const { width } = Dimensions.get('window');
+const COLUMN_COUNT = 2;
+const CARD_MARGIN = 8;
+// (Largura da tela - margens laterais - espaço entre cards) / número de colunas
+const CARD_WIDTH = (width - 32 - (CARD_MARGIN * 2)) / COLUMN_COUNT;
 
 export function Home() {
   const navigation = useNavigation<NavigationProps>();
   const isFocused = useIsFocused();
   
   const [listData, setListData] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true); // Estado de carregamento
+  const [loading, setLoading] = useState(true);
 
-  // Função para buscar dados do Back-end
   async function loadProducts() {
     try {
       setLoading(true);
-      const response = await api.get('/products'); // Chama a rota /products
+      const response = await api.get('/products');
       setListData(response.data);
     } catch (error) {
       console.log(error);
-      Alert.alert('Erro', 'Não foi possível carregar os produtos do servidor.');
     } finally {
       setLoading(false);
     }
   }
 
-  // Busca sempre que a tela ganha foco
   useEffect(() => {
     if (isFocused) {
       loadProducts();
@@ -48,14 +52,20 @@ export function Home() {
   const renderItem = ({ item }: { item: Product }) => (
     <TouchableOpacity 
       style={styles.card} 
-      activeOpacity={0.7}
+      activeOpacity={0.9}
       onPress={() => handleOpenDetails(item)}
     >
-      <Image source={{ uri: item.image }} style={styles.image} resizeMode="cover" />
+      <View style={styles.imageContainer}>
+        <Image 
+          source={{ uri: item.image || 'https://via.placeholder.com/150' }} 
+          style={styles.image} 
+          resizeMode="cover" 
+        />
+      </View>
       <View style={styles.infoContainer}>
-        <Text style={styles.name}>{item.name}</Text>
+        <Text style={styles.name} numberOfLines={1}>{item.name}</Text>
         <Text style={styles.price}>
-          {item.price.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+          {Number(item.price).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
         </Text>
       </View>
     </TouchableOpacity>
@@ -70,9 +80,13 @@ export function Home() {
           data={listData}
           keyExtractor={(item) => item.id}
           renderItem={renderItem}
+          
+          // --- MÁGICA DO GRID ---
+          numColumns={COLUMN_COUNT}
+          columnWrapperStyle={styles.row}
           contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}
-          // Pull to Refresh (arrastar pra baixo pra atualizar)
+          
           onRefresh={loadProducts}
           refreshing={loading}
         />
@@ -88,40 +102,50 @@ export function Home() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: '#F0F2F5', // Fundo cinza claro moderno
   },
   listContent: {
-    padding: 20,
+    padding: 16,
     paddingBottom: 100,
   },
-  card: {
-    backgroundColor: '#FFF',
-    borderRadius: 12,
+  row: {
+    justifyContent: 'space-between', // Espalha os cards
     marginBottom: 16,
-    overflow: 'hidden',
-    elevation: 3,
+  },
+  card: {
+    width: CARD_WIDTH,
+    backgroundColor: '#FFF',
+    borderRadius: 16,
+    // Sombras suaves (Android + iOS)
+    elevation: 4,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
   },
+  imageContainer: {
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+    overflow: 'hidden',
+  },
   image: {
     width: '100%',
-    height: 150,
+    height: 140,
+    backgroundColor: '#EEE',
   },
   infoContainer: {
     padding: 12,
   },
   name: {
-    fontSize: 18,
-    fontWeight: '600',
+    fontSize: 14,
+    fontWeight: '500',
     color: '#333',
+    marginBottom: 4,
   },
   price: {
     fontSize: 16,
-    color: '#00B37E',
+    color: '#00B37E', // Verde destaque
     fontWeight: 'bold',
-    marginTop: 4,
   },
   fab: {
     position: 'absolute',
@@ -133,16 +157,16 @@ const styles = StyleSheet.create({
     backgroundColor: '#00B37E',
     justifyContent: 'center',
     alignItems: 'center',
-    elevation: 5,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
+    elevation: 6,
+    shadowColor: '#00B37E',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
   },
   fabText: {
     fontSize: 32,
     color: '#FFF',
     fontWeight: 'bold',
-    marginTop: -2,
+    marginTop: -4,
   }
 });

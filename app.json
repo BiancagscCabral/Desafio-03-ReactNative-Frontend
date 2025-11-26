@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "Desafio-03-ReactNative-Frontend",
-    "slug": "Desafio-03-ReactNative-Frontend",
+    "name": "NexoApp",
+    "slug": "NexoApp",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
