@@ -26,7 +26,7 @@ export function Login() {
     >
       <View style={styles.header}>
         <Text style={styles.title}>Nexo<Text style={styles.titleHighlight}>App</Text></Text>
-        <Text style={styles.subtitle}>Gerencie sua loja de qualquer lugar</Text>
+        <Text style={styles.subtitle}>Dê nexo ao seu negócio.</Text>
       </View>
 
       <View style={styles.card}>
